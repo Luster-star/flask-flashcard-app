@@ -1,0 +1,71 @@
+<script>
+    let wordsOnly = [];
+    let wordsWithMeaning = [];
+    let index = 0;
+    let interval;
+    let mode = "words_only";
+
+    function uploadFile() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        if (!file) {
+            alert('파일을 선택해주세요.');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                wordsOnly = data.words_only;
+                wordsWithMeaning = data.words_with_meaning;
+                alert('업로드 성공!');
+                document.getElementById('flashcard').innerText = "준비 완료!";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('파일 업로드 중 오류가 발생했습니다.');
+        });
+    }
+
+    function startFlashcards(selectedMode) {
+        if (wordsOnly.length === 0) {
+            alert('먼저 파일을 업로드해주세요.');
+            return;
+        }
+        mode = selectedMode;
+        index = 0;
+        clearInterval(interval);
+        showNext();
+    }
+
+    function showNext() {
+        if (index >= wordsOnly.length) {
+            document.getElementById('flashcard').innerText = "FINISH!";
+            return;
+        }
+
+        if (mode === "words_only") {
+            document.getElementById('flashcard').innerText = wordsOnly[index];
+            index++;
+            setTimeout(showNext, 3000);
+        } else {
+            document.getElementById('flashcard').innerText = wordsWithMeaning[index][0]; // 단어 표시
+            setTimeout(() => {
+                document.getElementById('flashcard').innerText = wordsWithMeaning[index][1]; // 해석 표시
+                setTimeout(() => {
+                    index++;
+                    showNext();
+                }, 3000);
+            }, 3000);
+        }
+    }
+</script>
